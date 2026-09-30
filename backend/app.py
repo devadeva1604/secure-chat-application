@@ -1,8 +1,18 @@
 from flask import Flask, request, send_from_directory
 from flask_socketio import SocketIO
 import sqlite3
+import os
 from werkzeug.security import generate_password_hash, check_password_hash
 
+
+# ================= PATHS =================
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.join(BASE_DIR, "..", "frontend")
+DATABASE_PATH = os.path.join(BASE_DIR, "chat.db")
+
+
+# ================= FLASK =================
 
 app = Flask(__name__)
 
@@ -14,7 +24,7 @@ socketio = SocketIO(
 
 # ================= DATABASE =================
 
-connection = sqlite3.connect("chat.db")
+connection = sqlite3.connect(DATABASE_PATH)
 
 print(
     "DATABASE USED:",
@@ -57,7 +67,7 @@ connection.close()
 def home():
 
     return send_from_directory(
-        "../frontend",
+        FRONTEND_DIR,
         "index.html"
     )
 
@@ -68,7 +78,7 @@ def home():
 def frontend(filename):
 
     return send_from_directory(
-        "../frontend",
+        FRONTEND_DIR,
         filename
     )
 
@@ -101,7 +111,7 @@ def register():
     hashed_password = generate_password_hash(password)
 
 
-    connection = sqlite3.connect("chat.db")
+    connection = sqlite3.connect(DATABASE_PATH)
     cursor = connection.cursor()
 
 
@@ -165,7 +175,7 @@ def login():
     password = request.form["password"]
 
 
-    connection = sqlite3.connect("chat.db")
+    connection = sqlite3.connect(DATABASE_PATH)
     cursor = connection.cursor()
 
 
@@ -234,15 +244,13 @@ def handle_message(data):
     )
 
 
-    # Get username and message
-
     username = data["username"]
     message = data["message"]
 
 
     # Save message in database
 
-    connection = sqlite3.connect("chat.db")
+    connection = sqlite3.connect(DATABASE_PATH)
     cursor = connection.cursor()
 
 
@@ -263,8 +271,7 @@ def handle_message(data):
     connection.close()
 
 
-    # Send username + message
-    # to all connected users
+    # Send message to all connected users
 
     socketio.emit(
         "message",
@@ -294,10 +301,18 @@ if __name__ == "__main__":
     )
 
 
+    port = int(
+        os.environ.get(
+            "PORT",
+            8000
+        )
+    )
+
+
     socketio.run(
         app,
-        host="127.0.0.1",
-        port=8000,
-        debug=True,
+        host="0.0.0.0",
+        port=port,
+        debug=False,
         allow_unsafe_werkzeug=True
     )
