@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>Secure Chat</title>
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+
+</head>
+
+
+<body>
+
+    <div class="container">
+
+        <h1>Secure Chat</h1>
+
+        <p id="user-info">
+            Logged in as:
+        </p>
+
+        <p id="status">
+            Connecting...
+        </p>
+
+
+        <div id="chat-box">
+        </div>
+
+
+        <br>
+
+
+        <input
+            type="text"
+            id="message"
+            placeholder="Type your message..."
+        >
+
+
+        <button id="sendButton">
+            Send
+        </button>
+
+    </div>
+
+
+    <script>
+
+        // ================= USERNAME =================
+
+        const username =
+            localStorage.getItem("username");
+
+
+        document.getElementById("user-info").innerText =
+            "Logged in as: " + username;
+
+
+        // ================= SOCKET CONNECTION =================
+
+        const socket =
+            io("http://127.0.0.1:8000");
+
+
+        socket.on("connect", function () {
+
+            document.getElementById("status").innerText =
+                "Connected to chat";
+
+        });
+
+
+        // ================= SEND MESSAGE =================
+
+        document.getElementById("sendButton")
+            .addEventListener("click", function () {
+
+                let message =
+                    document.getElementById("message").value.trim();
+
+
+                if (message === "") {
+
+                    return;
+
+                }
+
+
+                // Send username + message
+
+                socket.emit(
+                    "message",
+                    {
+                        username: username,
+                        message: message
+                    }
+                );
+
+
+                // Clear input
+
+                document.getElementById("message").value = "";
+
+            });
+
+
+        // ================= RECEIVE MESSAGE =================
+
+        socket.on("message", function (data) {
+
+            let chatBox =
+                document.getElementById("chat-box");
+
+
+            let newMessage =
+                document.createElement("p");
+
+
+            newMessage.innerText =
+                data.username + ": " + data.message;
+
+
+            chatBox.appendChild(newMessage);
+
+
+            // Scroll to latest message
+
+            chatBox.scrollTop =
+                chatBox.scrollHeight;
+
+        });
+
+    </script>
+
+</body>
+
+</html>
